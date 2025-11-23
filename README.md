@@ -43,14 +43,46 @@ User-Friendly Plan
 
 ### Installation
 
-```bash
-# Clone the repository
-git clone <repository-url>
-cd college-planner
+#### 1. Create a Virtual Environment (Recommended)
 
-# Install dependencies (if needed)
+```bash
+# Create a virtual environment
+python3 -m venv venv
+
+# Activate the virtual environment
+# On macOS/Linux:
+source venv/bin/activate
+# On Windows:
+# venv\Scripts\activate
+
+# Your terminal prompt should now show (venv)
+```
+
+#### 2. Install Dependencies
+
+```bash
+# Make sure you're in the virtual environment (venv should be active)
+pip install --upgrade pip
 pip install -r requirements.txt
 ```
+
+#### 3. Set Up Environment Variables
+
+```bash
+# Copy the sample environment file
+cp .env.sample .env
+
+# Edit .env and add your Google API key
+# Get your API key from: https://makersuite.google.com/app/apikey
+nano .env  # or use your preferred editor
+```
+
+Or manually create a `.env` file with:
+```
+GOOGLE_API_KEY=your-api-key-here
+```
+
+**Note**: The system will work without the API key using rule-based fallback, but ADK Agent features require it.
 
 ### Basic Usage
 
@@ -176,9 +208,38 @@ The Explainer Agent generates:
 - Key recommendations
 - Immediate next steps
 
+## 📊 Data Collection
+
+To populate the database with real student profiles, see [DATA_SOURCES.md](DATA_SOURCES.md) for:
+- Legitimate sources for student profiles
+- Privacy and ethics guidelines
+- Data collection best practices
+- Tools and scripts for collecting profiles
+
+### Collection Scripts
+
+```bash
+# Interactive profile collection
+python3 scripts/collect_profiles.py
+
+# Parse Reddit posts (r/collegeresults)
+python3 scripts/reddit_collector.py
+
+# Enrich and validate profiles
+python3 scripts/enrich_profiles.py
+```
+
+## 🚀 Next Steps
+
+For integrating more agents and real data, see [NEXT_STEPS.md](NEXT_STEPS.md) for:
+- Converting remaining agents to ADK
+- Multi-agent orchestration
+- Real anonymized data integration
+- Enhanced features (vector search, tools, etc.)
+
 ## 🔮 Future Enhancements
 
-- **LLM Integration**: Use OpenAI/Anthropic for more sophisticated planning and critique
+- **LLM Integration**: Enhanced planning and critique with advanced models
 - **Vector Search**: Enhanced similarity matching using embeddings
 - **Real Data**: Integration with actual student profile databases
 - **Web Interface**: User-friendly web application
