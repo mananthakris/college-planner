@@ -1,11 +1,90 @@
 """
 Planner Agent: Creates a 4-year roadmap for the student.
+Uses Google ADK Agent for intelligent planning.
 """
 from typing import Dict, Any
+import json
 from ..models import (
     StudentProfile, FourYearPlan, YearlyPlan, Grade,
     SimilarProfile, Opportunity
 )
+from ..config import get_gemini_model
+from ..utils.adk_helper import run_agent_sync, extract_json_from_response
+
+
+def _create_planner_agent():
+    """
+    Create a Google ADK Agent for 4-year planning.
+    
+    Returns:
+        ADK Agent instance configured for planning
+    """
+    try:
+        from google.adk.agents import Agent
+        from google.adk.tools import FunctionTool
+        from ..tools.agent_tools import (
+            get_opportunities_tool,
+            find_similar_profiles_tool,
+            search_by_college_tool,
+            search_by_major_tool
+        )
+        
+        agent = Agent(
+            name="planner_agent",
+            model=get_gemini_model(),
+            description="Creates comprehensive 4-year roadmaps for students based on their profile and similar successful students",
+            instruction="""You are a college planning agent. Your task is to create a detailed 4-year high school roadmap.
+
+Given a student profile and similar successful student profiles, you should:
+1. Analyze the student's interests, target colleges, and target majors
+2. Review what similar successful students did in each grade year
+3. Create a comprehensive plan for each of the 4 years (9th, 10th, 11th, 12th grade)
+4. Include courses, extracurriculars, competitions, internships, test prep, and goals for each year
+5. Generate an overall strategy and key milestones
+
+For each year, provide:
+- Courses: Specific course recommendations aligned with interests and target majors
+- Extracurriculars: Activities that build depth in interests
+- Competitions: Relevant competitions for the grade level
+- Internships: Summer programs or internships (typically for juniors/seniors)
+- Test Prep: Standardized test preparation timeline
+- Goals: Year-specific goals
+- Rationale: Explanation for the year's plan
+
+You have access to tools to query the database:
+- get_opportunities: Get relevant opportunities for a specific grade level and interests
+- find_similar_profiles: Find students with similar interests and majors
+- search_by_college: Find students who targeted a specific college
+- search_by_major: Find students pursuing a specific major
+
+Use these tools to gather additional context when creating the plan, especially if you need more information about opportunities or similar students beyond what's provided in the initial context.
+
+Return your response as structured JSON matching the FourYearPlan format.""",
+            tools=[
+                FunctionTool(get_opportunities_tool),
+                FunctionTool(find_similar_profiles_tool),
+                FunctionTool(search_by_college_tool),
+                FunctionTool(search_by_major_tool)
+            ]
+        )
+        return agent
+    except ImportError as e:
+        raise ImportError(
+            f"google-adk is not available. Please activate your virtual environment and install: pip install google-adk\n"
+            f"Original error: {e}"
+        )
+
+
+def get_planner_agent():
+    """Get or create the planner agent instance."""
+    global _planner_agent_instance
+    if _planner_agent_instance is None:
+        _planner_agent_instance = _create_planner_agent()
+    return _planner_agent_instance
+
+
+# Global agent instance (lazy initialization)
+_planner_agent_instance = None
 
 
 def plan(
@@ -14,6 +93,7 @@ def plan(
 ) -> FourYearPlan:
     """
     Create a comprehensive 4-year plan based on profile and similar students.
+    Uses ADK Agent when available, falls back to rule-based planning.
     
     Args:
         profile: The student's profile
@@ -22,6 +102,139 @@ def plan(
     Returns:
         FourYearPlan object with detailed roadmap
     """
+    # Try using ADK Agent
+    try:
+        agent = get_planner_agent()
+        return _plan_with_agent(profile, retrieval, agent)
+    except (ImportError, RuntimeError) as e:
+        print(f"Warning: ADK Planner Agent unavailable ({e}). Using rule-based planning.")
+    
+    # Fallback to rule-based planning
+    return _plan_rule_based(profile, retrieval)
+
+
+def _plan_with_agent(
+    profile: StudentProfile,
+    retrieval: Dict[str, Any],
+    agent
+) -> FourYearPlan:
+    """Create plan using ADK Agent."""
+    similar_profiles = retrieval.get("similar_profiles", [])
+    opportunities = retrieval.get("opportunities", [])
+    
+    # Prepare context for the agent
+    similar_profiles_summary = []
+    for sp in similar_profiles[:3]:  # Top 3
+        similar_profiles_summary.append({
+            "interests": sp.profile.interests,
+            "target_majors": sp.profile.target_majors,
+            "target_colleges": sp.profile.target_colleges,
+            "colleges_admitted": sp.colleges_admitted,
+            "extracurriculars": sp.profile.extracurriculars
+        })
+    
+    opportunities_summary = [{
+        "name": opp.name,
+        "type": opp.type,
+        "grade_levels": [g.value for g in opp.grade_levels],
+        "description": opp.description
+    } for opp in opportunities[:10]]
+    
+    prompt = f"""Create a comprehensive 4-year high school plan for this student:
+
+Student Profile:
+- Name: {profile.name}
+- Current Grade: {profile.current_grade.name} ({profile.current_grade.value})
+- Interests: {', '.join(profile.interests)}
+- Target Majors: {', '.join(profile.target_majors) if profile.target_majors else 'Not specified'}
+- Target Colleges: {', '.join(profile.target_colleges) if profile.target_colleges else 'Not specified'}
+- Academic Strengths: {', '.join(profile.academic_strengths) if profile.academic_strengths else 'Not specified'}
+- Current Extracurriculars: {', '.join(profile.extracurriculars) if profile.extracurriculars else 'None'}
+
+Similar Successful Students:
+{json.dumps(similar_profiles_summary, indent=2)}
+
+Available Opportunities:
+{json.dumps(opportunities_summary, indent=2)}
+
+Create a detailed 4-year plan with:
+- freshman_plan: YearlyPlan for 9th grade
+- sophomore_plan: YearlyPlan for 10th grade  
+- junior_plan: YearlyPlan for 11th grade
+- senior_plan: YearlyPlan for 12th grade
+- overall_strategy: String describing the overall approach
+- key_milestones: List of key milestones
+
+For each YearlyPlan, include:
+- grade: Grade enum value (FRESHMAN=9, SOPHOMORE=10, JUNIOR=11, SENIOR=12)
+- courses: List of course names
+- extracurriculars: List of extracurricular activities
+- competitions: List of competitions
+- internships: List of internships/programs
+- test_prep: List of test preparation activities
+- goals: List of goals for the year
+- rationale: String explaining the plan
+
+Return ONLY valid JSON matching this structure. Skip years that are before the student's current grade."""
+
+    try:
+        response = run_agent_sync(agent, prompt)
+        plan_data = extract_json_from_response(response)
+        
+        if plan_data:
+            return _parse_plan_from_json(plan_data, profile)
+    except Exception as e:
+        print(f"Warning: Error parsing ADK agent response ({e}). Falling back to rule-based planning.")
+    
+    # Fallback if agent response parsing fails
+    return _plan_rule_based(profile, retrieval)
+
+
+def _parse_plan_from_json(plan_data: dict, profile: StudentProfile) -> FourYearPlan:
+    """Parse plan from JSON response."""
+    try:
+        # Parse yearly plans
+        def parse_yearly_plan(year_key: str, grade: Grade) -> YearlyPlan:
+            year_data = plan_data.get(year_key, {})
+            return YearlyPlan(
+                grade=grade,
+                courses=year_data.get('courses', []),
+                extracurriculars=year_data.get('extracurriculars', []),
+                competitions=year_data.get('competitions', []),
+                internships=year_data.get('internships', []),
+                test_prep=year_data.get('test_prep', []),
+                goals=year_data.get('goals', []),
+                rationale=year_data.get('rationale', '')
+            )
+        
+        freshman_plan = parse_yearly_plan('freshman_plan', Grade.FRESHMAN)
+        sophomore_plan = parse_yearly_plan('sophomore_plan', Grade.SOPHOMORE)
+        junior_plan = parse_yearly_plan('junior_plan', Grade.JUNIOR)
+        senior_plan = parse_yearly_plan('senior_plan', Grade.SENIOR)
+        
+        # Parse overall strategy and milestones
+        overall_strategy = plan_data.get('overall_strategy', '')
+        key_milestones = plan_data.get('key_milestones', [])
+        
+        return FourYearPlan(
+            student_profile=profile,
+            freshman_plan=freshman_plan,
+            sophomore_plan=sophomore_plan,
+            junior_plan=junior_plan,
+            senior_plan=senior_plan,
+            overall_strategy=overall_strategy,
+            key_milestones=key_milestones
+        )
+    except Exception as e:
+        print(f"Warning: Failed to parse JSON plan structure: {e}")
+        raise ValueError(f"Failed to parse plan from JSON: {e}")
+
+
+def _plan_rule_based(
+    profile: StudentProfile,
+    retrieval: Dict[str, Any]
+) -> FourYearPlan:
+    """Create plan using rule-based logic (original implementation)."""
     similar_profiles = retrieval.get("similar_profiles", [])
     opportunities = retrieval.get("opportunities", [])
     

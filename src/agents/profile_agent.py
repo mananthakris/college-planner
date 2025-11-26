@@ -6,6 +6,7 @@ from typing import Dict, Any, Optional
 import json
 from ..models import StudentProfile, Grade
 from ..config import get_gemini_model
+from ..utils.adk_helper import run_agent_sync, extract_json_from_response
 
 
 def _create_profile_agent():
@@ -129,20 +130,12 @@ Extract the following information and return ONLY valid JSON (no markdown, no co
 Return only the JSON object, nothing else."""
 
             # Run the ADK agent
-            response = agent.run(prompt)
+            response = run_agent_sync(agent, prompt)
             
-            # Extract JSON from response
-            response_text = str(response).strip()
-            
-            # Remove markdown code blocks if present
-            if response_text.startswith("```"):
-                response_text = response_text.split("```")[1]
-                if response_text.startswith("json"):
-                    response_text = response_text[4:]
-                response_text = response_text.strip()
-            
-            # Parse JSON
-            profile_dict = json.loads(response_text)
+            # Extract JSON from response using helper
+            profile_dict = extract_json_from_response(response)
+            if not profile_dict:
+                raise ValueError("Failed to extract JSON from agent response")
             
             # Normalize the extracted data
             return normalize(profile_dict)

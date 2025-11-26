@@ -1,8 +1,87 @@
 """
 Explainer Agent: Generates user-friendly final output.
+Uses Google ADK Agent for natural language generation.
 """
 from typing import Dict, Any
+import json
+import warnings
 from ..models import StudentProfile, FourYearPlan, Critique, Explanation, Grade
+from ..config import get_gemini_model
+from ..utils.adk_helper import run_agent_sync, extract_json_from_response
+
+
+def _create_explainer_agent():
+    """
+    Create a Google ADK Agent for explanation generation.
+    
+    Returns:
+        ADK Agent instance configured for explanation
+    """
+    try:
+        from google.adk.agents import Agent
+        from google.adk.tools import FunctionTool
+        from ..tools.agent_tools import (
+            find_similar_profiles_tool,
+            search_by_college_tool,
+            get_opportunities_tool
+        )
+        
+        agent = Agent(
+            name="explainer_agent",
+            model=get_gemini_model(),
+            description="Generates user-friendly, comprehensive explanations of 4-year plans for students",
+            instruction="""You are an explanation agent. Your task is to generate clear, helpful explanations of 4-year high school plans.
+
+Given a student profile, their 4-year plan, and a critique, you should create:
+1. A high-level summary that introduces the plan and highlights key points
+2. A plan overview that explains the overall strategy
+3. Year-by-year breakdowns with detailed information for each grade
+4. Key recommendations based on the critique
+5. Immediate next steps for the student
+
+Your explanations should be:
+- Clear and easy to understand for high school students
+- Encouraging and supportive
+- Actionable with specific recommendations
+- Well-formatted with proper structure
+
+You have access to tools to enhance your explanations:
+- find_similar_profiles: Find success stories of similar students to provide examples
+- search_by_college: Get context about what students who got into target colleges did
+- get_opportunities: Look up specific opportunities to mention in recommendations
+
+Use these tools to provide concrete examples and specific opportunities when generating explanations.
+
+Return your response as structured JSON with:
+- summary: String with high-level overview
+- plan_overview: String describing the overall strategy
+- year_by_year: Dictionary mapping year names to detailed breakdowns
+- key_recommendations: List of important recommendations
+- next_steps: List of immediate action items""",
+            tools=[
+                FunctionTool(find_similar_profiles_tool),
+                FunctionTool(search_by_college_tool),
+                FunctionTool(get_opportunities_tool)
+            ]
+        )
+        return agent
+    except ImportError as e:
+        raise ImportError(
+            f"google-adk is not available. Please activate your virtual environment and install: pip install google-adk\n"
+            f"Original error: {e}"
+        )
+
+
+def get_explainer_agent():
+    """Get or create the explainer agent instance."""
+    global _explainer_agent_instance
+    if _explainer_agent_instance is None:
+        _explainer_agent_instance = _create_explainer_agent()
+    return _explainer_agent_instance
+
+
+# Global agent instance (lazy initialization)
+_explainer_agent_instance = None
 
 
 def explain(
@@ -12,6 +91,7 @@ def explain(
 ) -> Explanation:
     """
     Generate a comprehensive, user-friendly explanation of the plan.
+    Uses ADK Agent when available, falls back to rule-based explanation.
     
     Args:
         profile: The student's profile
@@ -21,6 +101,125 @@ def explain(
     Returns:
         Explanation object with formatted output
     """
+    # Try using ADK Agent
+    try:
+        agent = get_explainer_agent()
+        return _explain_with_agent(profile, plan, critique, agent)
+    except (ImportError, RuntimeError) as e:
+        print(f"Warning: ADK Explainer Agent unavailable ({e}). Using rule-based explanation.")
+    
+    # Fallback to rule-based explanation
+    return _explain_rule_based(profile, plan, critique)
+
+
+def _explain_with_agent(
+    profile: StudentProfile,
+    plan: FourYearPlan,
+    critique: Critique,
+    agent
+) -> Explanation:
+    """Generate explanation using ADK Agent."""
+    # Prepare plan and critique summary
+    plan_data = {
+        "overall_strategy": plan.overall_strategy,
+        "key_milestones": plan.key_milestones,
+        "years": {
+            "freshman": {
+                "courses": plan.freshman_plan.courses,
+                "extracurriculars": plan.freshman_plan.extracurriculars,
+                "competitions": plan.freshman_plan.competitions,
+                "internships": plan.freshman_plan.internships,
+                "test_prep": plan.freshman_plan.test_prep,
+                "goals": plan.freshman_plan.goals,
+                "rationale": plan.freshman_plan.rationale
+            },
+            "sophomore": {
+                "courses": plan.sophomore_plan.courses,
+                "extracurriculars": plan.sophomore_plan.extracurriculars,
+                "competitions": plan.sophomore_plan.competitions,
+                "internships": plan.sophomore_plan.internships,
+                "test_prep": plan.sophomore_plan.test_prep,
+                "goals": plan.sophomore_plan.goals,
+                "rationale": plan.sophomore_plan.rationale
+            },
+            "junior": {
+                "courses": plan.junior_plan.courses,
+                "extracurriculars": plan.junior_plan.extracurriculars,
+                "competitions": plan.junior_plan.competitions,
+                "internships": plan.junior_plan.internships,
+                "test_prep": plan.junior_plan.test_prep,
+                "goals": plan.junior_plan.goals,
+                "rationale": plan.junior_plan.rationale
+            },
+            "senior": {
+                "courses": plan.senior_plan.courses,
+                "extracurriculars": plan.senior_plan.extracurriculars,
+                "competitions": plan.senior_plan.competitions,
+                "internships": plan.senior_plan.internships,
+                "test_prep": plan.senior_plan.test_prep,
+                "goals": plan.senior_plan.goals,
+                "rationale": plan.senior_plan.rationale
+            }
+        }
+    }
+    
+    prompt = f"""Generate a comprehensive, user-friendly explanation of this 4-year high school plan:
+
+Student: {profile.name}
+Current Grade: {profile.current_grade.name}
+Interests: {', '.join(profile.interests)}
+Target Majors: {', '.join(profile.target_majors) if profile.target_majors else 'Not specified'}
+Target Colleges: {', '.join(profile.target_colleges) if profile.target_colleges else 'Not specified'}
+
+Plan Details:
+{json.dumps(plan_data, indent=2)}
+
+Critique:
+- Score: {critique.score:.0%}
+- Strengths: {', '.join(critique.strengths[:3]) if critique.strengths else 'None'}
+- Weaknesses: {', '.join(critique.weaknesses[:3]) if critique.weaknesses else 'None'}
+- Suggestions: {', '.join(critique.suggestions[:3]) if critique.suggestions else 'None'}
+
+Generate a clear, encouraging explanation with:
+- summary: High-level overview (markdown formatted)
+- plan_overview: Overall strategy explanation (markdown formatted)
+- year_by_year: Dictionary with keys like "Freshman Year (9th Grade)", "Sophomore Year (10th Grade)", etc., each containing detailed markdown breakdown
+- key_recommendations: List of important recommendations
+- next_steps: List of immediate action items
+
+Return ONLY valid JSON."""
+
+    try:
+        # Suppress warnings from ADK library about non-text parts (function calls)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message=".*non-text parts.*")
+            warnings.filterwarnings("ignore", category=UserWarning)
+            
+            response = run_agent_sync(agent, prompt)
+        
+        explanation_data = extract_json_from_response(response)
+        
+        if explanation_data:
+            return Explanation(
+                summary=explanation_data.get("summary", ""),
+                plan_overview=explanation_data.get("plan_overview", ""),
+                year_by_year=explanation_data.get("year_by_year", {}),
+                key_recommendations=explanation_data.get("key_recommendations", []),
+                next_steps=explanation_data.get("next_steps", [])
+            )
+    except Exception as e:
+        print(f"Warning: Error parsing ADK agent response ({e}). Falling back to rule-based explanation.")
+    
+    # Fallback if agent response parsing fails
+    return _explain_rule_based(profile, plan, critique)
+
+
+def _explain_rule_based(
+    profile: StudentProfile,
+    plan: FourYearPlan,
+    critique: Critique
+) -> Explanation:
+    """Generate explanation using rule-based logic (original implementation)."""
     summary = _generate_summary(profile, plan, critique)
     plan_overview = _generate_plan_overview(plan)
     year_by_year = _generate_year_by_year(plan)

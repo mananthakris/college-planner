@@ -4,8 +4,10 @@ Complete setup instructions for the College Planner multi-agent system.
 
 ## Prerequisites
 
-- Python 3.8 or higher
+- **Python 3.10 or higher** (required for Google ADK)
 - pip (Python package manager)
+
+**Important**: Google ADK requires Python 3.10+. Python 3.9 will not work.
 
 ## Step-by-Step Setup
 
@@ -16,13 +18,48 @@ git clone <repository-url>
 cd college-planner
 ```
 
-### 2. Create Virtual Environment
-
-Using `venv` (recommended):
+### 2. Check Python Version
 
 ```bash
-# Create virtual environment
+# Check default Python version
+python3 --version
+
+# If it shows 3.9 or lower, check for Python 3.10+
+which python3.12 python3.11 python3.10
+```
+
+**If you don't have Python 3.10+:**
+
+**macOS (Homebrew):**
+```bash
+brew install python@3.12
+# Then use: python3.12 -m venv venv
+```
+
+**macOS (without Homebrew):**
+- Download from [python.org](https://www.python.org/downloads/)
+- Install Python 3.12
+
+**Linux:**
+```bash
+sudo apt install python3.10  # Ubuntu/Debian
+# or
+sudo yum install python3.10  # RHEL/CentOS
+```
+
+### 3. Create Virtual Environment
+
+**Using Python 3.10+ (required):**
+
+```bash
+# Option 1: If python3 points to 3.10+
 python3 -m venv venv
+
+# Option 2: Use specific version
+python3.12 -m venv venv  # or python3.11 or python3.10
+
+# Option 3: Use full path (if needed)
+/opt/homebrew/bin/python3.12 -m venv venv
 
 # Activate virtual environment
 # On macOS/Linux:
@@ -31,7 +68,20 @@ source venv/bin/activate
 # On Windows:
 venv\Scripts\activate
 
+# Verify Python version in venv
+python --version  # Should show 3.10, 3.11, or 3.12
+
 # You should see (venv) in your terminal prompt
+```
+
+**If you see Python 3.9 in the venv:**
+```bash
+# Deactivate and recreate with correct version
+deactivate
+rm -rf venv
+python3.12 -m venv venv  # Use your Python 3.10+ version
+source venv/bin/activate
+python --version  # Verify it's 3.10+
 ```
 
 **Why use a virtual environment?**

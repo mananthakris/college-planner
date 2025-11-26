@@ -28,7 +28,8 @@ def get_gemini_api_key() -> Optional[str]:
 
 def get_gemini_model() -> str:
     """Get the Gemini model name to use."""
-    return os.getenv("GEMINI_MODEL", "gemini-pro")
+    # Default to a valid model name (gemini-pro doesn't exist, use gemini-1.5-flash)
+    return os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite")
 
 
 # Database configuration

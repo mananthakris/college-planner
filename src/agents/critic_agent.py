@@ -1,8 +1,91 @@
 """
 Critic Agent: Evaluates and critiques plans, acting as a loop agent for refinement.
+Uses Google ADK Agent for intelligent critique.
 """
 from typing import Dict, Any
+import json
+import warnings
 from ..models import StudentProfile, FourYearPlan, Critique
+from ..config import get_gemini_model
+from ..utils.adk_helper import run_agent_sync, extract_json_from_response
+
+
+def _create_critic_agent():
+    """
+    Create a Google ADK Agent for plan critique.
+    
+    Returns:
+        ADK Agent instance configured for critique
+    """
+    try:
+        from google.adk.agents import Agent
+        from google.adk.tools import FunctionTool
+        from ..tools.agent_tools import (
+            find_similar_profiles_tool,
+            search_by_college_tool,
+            search_by_major_tool,
+            get_profile_statistics_tool
+        )
+        
+        agent = Agent(
+            name="critic_agent",
+            model=get_gemini_model(),
+            description="Evaluates and critiques 4-year plans, identifying strengths, weaknesses, and improvement suggestions",
+            instruction="""You are a plan critique agent. Your task is to evaluate 4-year high school plans.
+
+Given a student profile and their 4-year plan, you should:
+1. Identify strengths of the plan (course alignment, progression, extracurricular depth, etc.)
+2. Identify weaknesses (missing courses, lack of rigor, gaps in preparation, etc.)
+3. Generate specific suggestions for improvement
+4. Calculate an overall quality score (0.0 to 1.0)
+5. Determine if the plan needs revision (boolean)
+
+Evaluate based on:
+- Alignment with student interests and target majors/colleges
+- Academic progression and rigor
+- Extracurricular depth and leadership opportunities
+- Test preparation timeline
+- Balance and feasibility
+
+You have access to tools to help with evaluation:
+- find_similar_profiles: Find successful students with similar interests/majors to compare against
+- search_by_college: See what students who got into target colleges did
+- search_by_major: See course patterns for students pursuing the same major
+- get_profile_statistics: Get database statistics to understand benchmarks
+
+Use these tools to make data-driven critiques. Compare the plan against what successful similar students did.
+
+Return your response as structured JSON with:
+- strengths: List of identified strengths
+- weaknesses: List of identified weaknesses
+- suggestions: List of improvement suggestions
+- score: Float between 0.0 and 1.0
+- needs_revision: Boolean indicating if plan needs changes""",
+            tools=[
+                FunctionTool(find_similar_profiles_tool),
+                FunctionTool(search_by_college_tool),
+                FunctionTool(search_by_major_tool),
+                FunctionTool(get_profile_statistics_tool)
+            ]
+        )
+        return agent
+    except ImportError as e:
+        raise ImportError(
+            f"google-adk is not available. Please activate your virtual environment and install: pip install google-adk\n"
+            f"Original error: {e}"
+        )
+
+
+def get_critic_agent():
+    """Get or create the critic agent instance."""
+    global _critic_agent_instance
+    if _critic_agent_instance is None:
+        _critic_agent_instance = _create_critic_agent()
+    return _critic_agent_instance
+
+
+# Global agent instance (lazy initialization)
+_critic_agent_instance = None
 
 
 def critique(
@@ -12,6 +95,7 @@ def critique(
 ) -> Critique:
     """
     Critique a plan and determine if it needs revision.
+    Uses ADK Agent when available, falls back to rule-based critique.
     This acts as a loop agent that can trigger plan refinement.
     
     Args:
@@ -22,6 +106,101 @@ def critique(
     Returns:
         Critique object with evaluation
     """
+    # Try using ADK Agent
+    try:
+        agent = get_critic_agent()
+        return _critique_with_agent(profile, plan, agent)
+    except (ImportError, RuntimeError) as e:
+        print(f"Warning: ADK Critic Agent unavailable ({e}). Using rule-based critique.")
+    
+    # Fallback to rule-based critique
+    return _critique_rule_based(profile, plan)
+
+
+def _critique_with_agent(
+    profile: StudentProfile,
+    plan: FourYearPlan,
+    agent
+) -> Critique:
+    """Critique plan using ADK Agent."""
+    # Prepare plan summary for agent
+    plan_summary = {
+        "freshman": {
+            "courses": plan.freshman_plan.courses,
+            "extracurriculars": plan.freshman_plan.extracurriculars,
+            "competitions": plan.freshman_plan.competitions,
+            "goals": plan.freshman_plan.goals
+        },
+        "sophomore": {
+            "courses": plan.sophomore_plan.courses,
+            "extracurriculars": plan.sophomore_plan.extracurriculars,
+            "competitions": plan.sophomore_plan.competitions,
+            "goals": plan.sophomore_plan.goals
+        },
+        "junior": {
+            "courses": plan.junior_plan.courses,
+            "extracurriculars": plan.junior_plan.extracurriculars,
+            "test_prep": plan.junior_plan.test_prep,
+            "goals": plan.junior_plan.goals
+        },
+        "senior": {
+            "courses": plan.senior_plan.courses,
+            "extracurriculars": plan.senior_plan.extracurriculars,
+            "goals": plan.senior_plan.goals
+        },
+        "overall_strategy": plan.overall_strategy,
+        "key_milestones": plan.key_milestones
+    }
+    
+    prompt = f"""Evaluate this 4-year high school plan:
+
+Student Profile:
+- Interests: {', '.join(profile.interests)}
+- Target Majors: {', '.join(profile.target_majors) if profile.target_majors else 'Not specified'}
+- Target Colleges: {', '.join(profile.target_colleges) if profile.target_colleges else 'Not specified'}
+- Current Grade: {profile.current_grade.name}
+- Academic Strengths: {', '.join(profile.academic_strengths) if profile.academic_strengths else 'Not specified'}
+
+4-Year Plan:
+{json.dumps(plan_summary, indent=2)}
+
+Evaluate the plan and return JSON with:
+- strengths: List of plan strengths
+- weaknesses: List of plan weaknesses  
+- suggestions: List of improvement suggestions
+- score: Float 0.0-1.0 (overall quality)
+- needs_revision: Boolean (true if plan needs changes)"""
+
+    try:
+        # Suppress warnings from ADK library about non-text parts (function calls)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message=".*non-text parts.*")
+            warnings.filterwarnings("ignore", category=UserWarning)
+            
+            response = run_agent_sync(agent, prompt)
+        
+        critique_data = extract_json_from_response(response)
+        
+        if critique_data:
+            return Critique(
+                strengths=critique_data.get("strengths", []),
+                weaknesses=critique_data.get("weaknesses", []),
+                suggestions=critique_data.get("suggestions", []),
+                score=float(critique_data.get("score", 0.5)),
+                needs_revision=bool(critique_data.get("needs_revision", False))
+            )
+    except Exception as e:
+        print(f"Warning: Error parsing ADK agent response ({e}). Falling back to rule-based critique.")
+    
+    # Fallback if agent response parsing fails
+    return _critique_rule_based(profile, plan)
+
+
+def _critique_rule_based(
+    profile: StudentProfile,
+    plan: FourYearPlan
+) -> Critique:
+    """Critique plan using rule-based logic (original implementation)."""
     strengths = _identify_strengths(profile, plan)
     weaknesses = _identify_weaknesses(profile, plan)
     suggestions = _generate_suggestions(profile, plan, weaknesses)
