@@ -50,7 +50,7 @@ This guide outlines the roadmap for integrating more ADK agents and using real a
 Based on current state, here are the most impactful next steps:
 
 ### Priority 1: Real Data Integration (Highest Impact) 🌟
-**Why**: Current database has only synthetic/sample data. Real profiles will dramatically improve plan quality.
+**Why**: Current database has a few (10) real anonymized student profiles. Adding upto 50 dramatically improve plan quality.
 
 **Steps**:
 1. Collect 50-100 anonymized profiles from r/collegeresults using existing script
@@ -292,53 +292,7 @@ agent = Agent(
 - [ ] **Add monitoring** - Track usage, performance, errors
 - [ ] **Create API documentation** - OpenAPI/Swagger docs
 
-## 🚀 Quick Start: Convert One Agent
 
-Here's a template to convert any agent:
-
-```python
-# In src/agents/[agent_name]_agent.py
-
-from google.adk.agents import Agent
-from ..config import get_gemini_model
-
-def _create_[agent_name]_agent():
-    """Create ADK Agent."""
-    try:
-        return Agent(
-            name="[agent_name]_agent",
-            model=get_gemini_model(),
-            description="[Description]",
-            instruction="""[Detailed instructions]""",
-            tools=[]
-        )
-    except ImportError:
-        return None
-
-def [existing_function](...):
-    """Enhanced with ADK Agent."""
-    agent = _create_[agent_name]_agent()
-    
-    if agent:
-        try:
-            # Use ADK agent
-            result = agent.run(prompt)
-            return process_result(result)
-        except Exception as e:
-            print(f"ADK Agent error: {e}. Using fallback.")
-    
-    # Fallback to existing function logic
-    return [existing_function_logic](...)
-
-_[agent_name]_agent_instance = None
-
-def get_[agent_name]_agent():
-    """Get or create agent instance."""
-    global _[agent_name]_agent_instance
-    if _[agent_name]_agent_instance is None:
-        _[agent_name]_agent_instance = _create_[agent_name]_agent()
-    return _[agent_name]_agent_instance
-```
 
 ## 📚 Resources
 
