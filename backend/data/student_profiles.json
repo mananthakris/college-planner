@@ -1,0 +1,74 @@
+[
+  {
+    "name": "Sample Student 1",
+    "current_grade": 12,
+    "interests": [
+      "Computer Science",
+      "Mathematics",
+      "Robotics"
+    ],
+    "academic_strengths": [
+      "Math",
+      "Science"
+    ],
+    "courses_taken": [
+      "AP Calculus",
+      "AP Computer Science",
+      "AP Physics"
+    ],
+    "courses_planned": [],
+    "extracurriculars": [
+      "Robotics Club",
+      "Math Olympiad"
+    ],
+    "achievements": [],
+    "target_colleges": [
+      "MIT",
+      "Stanford",
+      "UC Berkeley"
+    ],
+    "target_majors": [
+      "Computer Science",
+      "Engineering"
+    ],
+    "gpa": null,
+    "test_scores": {},
+    "additional_info": {}
+  },
+  {
+    "name": "Sample Student 2",
+    "current_grade": 12,
+    "interests": [
+      "Biology",
+      "Medicine",
+      "Research"
+    ],
+    "academic_strengths": [
+      "Biology",
+      "Chemistry"
+    ],
+    "courses_taken": [
+      "AP Biology",
+      "AP Chemistry",
+      "AP Statistics"
+    ],
+    "courses_planned": [],
+    "extracurriculars": [
+      "Science Research",
+      "Hospital Volunteer"
+    ],
+    "achievements": [],
+    "target_colleges": [
+      "Johns Hopkins",
+      "Harvard",
+      "Yale"
+    ],
+    "target_majors": [
+      "Biology",
+      "Pre-Med"
+    ],
+    "gpa": null,
+    "test_scores": {},
+    "additional_info": {}
+  }
+]

@@ -8,7 +8,7 @@ from ..models import (
     StudentProfile, FourYearPlan, YearlyPlan, Grade,
     SimilarProfile, Opportunity
 )
-from ..config import get_gemini_model
+from ..config import get_gemini_model, is_debug_mode
 from ..utils.adk_helper import run_agent_sync, extract_json_from_response
 
 
@@ -179,11 +179,50 @@ Return ONLY valid JSON matching this structure. Skip years that are before the s
 
     try:
         response = run_agent_sync(agent, prompt)
+        
+        # Debug output
+        if is_debug_mode():
+            print("\n" + "="*80)
+            print("DEBUG [planner_agent]: Planning Response")
+            print("="*80)
+            print(f"Response type: {type(response)}")
+            print(f"Response length: {len(str(response))} characters")
+            print("="*80 + "\n")
+        
         plan_data = extract_json_from_response(response)
         
-        if plan_data:
+        # Debug output for extraction result
+        if is_debug_mode():
+            print("\n" + "="*80)
+            print("DEBUG [planner_agent]: JSON Extraction Result")
+            print("="*80)
+            print(f"Extracted type: {type(plan_data)}")
+            if plan_data:
+                if isinstance(plan_data, dict):
+                    print(f"Extracted keys: {list(plan_data.keys())}")
+                    print(f"Has freshman_plan: {'freshman_plan' in plan_data}")
+                    print(f"Has sophomore_plan: {'sophomore_plan' in plan_data}")
+                else:
+                    print(f"Extracted value (not a dict): {plan_data}")
+            else:
+                print("Extracted value: None (JSON parsing failed)")
+            print("="*80 + "\n")
+        
+        if plan_data and isinstance(plan_data, dict):
             return _parse_plan_from_json(plan_data, profile)
+        else:
+            if is_debug_mode():
+                print(f"DEBUG [planner_agent]: Falling back to rule-based planning")
+                print(f"Reason: plan_data is {type(plan_data)} (expected dict)")
+            print(f"Warning: Failed to extract valid JSON from agent response. Falling back to rule-based planning.")
     except Exception as e:
+        if is_debug_mode():
+            import traceback
+            print("\n" + "="*80)
+            print("DEBUG [planner_agent]: Exception Details")
+            print("="*80)
+            traceback.print_exc()
+            print("="*80 + "\n")
         print(f"Warning: Error parsing ADK agent response ({e}). Falling back to rule-based planning.")
     
     # Fallback if agent response parsing fails
@@ -192,10 +231,17 @@ Return ONLY valid JSON matching this structure. Skip years that are before the s
 
 def _parse_plan_from_json(plan_data: dict, profile: StudentProfile) -> FourYearPlan:
     """Parse plan from JSON response."""
+    # Guard against None or non-dict input
+    if not plan_data or not isinstance(plan_data, dict):
+        raise ValueError(f"plan_data must be a dict, got {type(plan_data)}")
+    
     try:
         # Parse yearly plans
         def parse_yearly_plan(year_key: str, grade: Grade) -> YearlyPlan:
             year_data = plan_data.get(year_key, {})
+            # Also guard here in case year_data is None
+            if not year_data or not isinstance(year_data, dict):
+                year_data = {}
             return YearlyPlan(
                 grade=grade,
                 courses=year_data.get('courses', []),

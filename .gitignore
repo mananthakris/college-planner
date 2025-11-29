@@ -4,33 +4,17 @@ __pycache__/
 *$py.class
 *.so
 .Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-
-# Virtual environments
 venv/
 env/
 ENV/
 .venv
-venv*/
+*.egg-info/
+dist/
+build/
 
 # Environment variables
 .env
 .env.local
-.env.*.local
 
 # IDE
 .vscode/
@@ -39,19 +23,24 @@ venv*/
 *.swo
 *~
 
-# Output files
-output/
-*.json
-!data/*.json
-
-# Data files (if containing sensitive info)
-data/student_profiles.json
-data/opportunities.json
-
 # OS
 .DS_Store
 Thumbs.db
 
-# Logs
-*.log
+# Node.js (for frontend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
 
+# Frontend build
+frontend/dist/
+frontend/.vite/
+
+# Output files
+output/
+*.json.bak
+
+# Debug
+*.log

@@ -2,6 +2,8 @@
 
 A sophisticated multi-agent system that helps high school students create personalized 4-year roadmaps for college admissions. The system analyzes student profiles, finds similar successful students, and generates actionable plans to strengthen college applications.
 
+**Available as both a command-line tool and a modern web interface!**
+
 ## 🎯 Overview
 
 This system uses a sophisticated multi-agent architecture powered by **Google ADK (Agent Development Kit)** where specialized AI agents work together with database tools to create personalized college preparation plans:
@@ -114,8 +116,13 @@ All agents use Google's Gemini models through ADK with **17 tool instances** ena
 - 🔕 **Clean Output**: Warning suppression for ADK function calls
 - ⚡ **High Quality**: Achieves 80-90% plan quality consistently
 - 🔐 **Privacy First**: Anonymized data, no PII storage
+- 🌐 **Web Interface**: Modern React UI with FastAPI backend for easy interaction
 
 ## 🚀 Quick Start
+
+You can use the College Planner in two ways:
+1. **Command Line Interface** - Run `python3 main.py` or test scripts
+2. **Web Interface** - Modern React UI (see [Web UI Setup](#-web-ui-react--fastapi) below)
 
 ### Prerequisites
 
@@ -336,6 +343,126 @@ python3 test_natural_language.py
 python3 main.py
 ```
 
+## 🌐 Web UI (React + FastAPI)
+
+The project includes a modern web interface for easy interaction with the College Planner system.
+
+### Prerequisites
+
+- **Node.js 18+** and npm (for React frontend)
+- **Python 3.10+** with virtual environment
+- **Google API Key** (`GOOGLE_API_KEY` environment variable)
+- **All main project dependencies** installed (from Quick Start above)
+
+### Quick Start
+
+You'll need **two terminal windows** - one for the backend and one for the frontend.
+
+#### Terminal 1: Backend API
+
+```bash
+# Navigate to project root
+cd college-planner
+
+# Activate virtual environment
+source venv/bin/activate
+
+# Install main project dependencies (if not already installed)
+pip install -r requirements.txt
+
+# Install backend API dependencies (first time only)
+pip install -r backend/requirements.txt
+
+# Set API key (if not already set)
+export GOOGLE_API_KEY="your-api-key-here"
+
+# Start the FastAPI server
+cd backend
+python api.py
+```
+
+✅ Backend will run on **http://localhost:8000**
+
+You should see:
+```
+INFO:     Uvicorn running on http://0.0.0.0:8000
+INFO:     Application startup complete.
+```
+
+#### Terminal 2: React Frontend
+
+Open a **new terminal** and run:
+
+```bash
+# Navigate to frontend directory
+cd college-planner/frontend
+
+# Install Node.js dependencies (first time only)
+npm install
+
+# Start the development server
+npm run dev
+```
+
+✅ Frontend will run on **http://localhost:3000** (or next available port)
+
+You should see:
+```
+  VITE v5.x.x  ready in xxx ms
+  ➜  Local:   http://localhost:3000/
+```
+
+#### Step 3: Use the Web Interface
+
+1. Open your browser and go to **http://localhost:3000**
+2. Fill out the student profile form:
+   - **Basic Info**: Name, grade, GPA
+   - **Test Scores**: SAT/ACT (optional)
+   - **Interests & Strengths**: Academic interests, strengths
+   - **Targets**: Target majors and colleges (required)
+   - **Activities**: Courses, extracurriculars, achievements
+3. Click **"Generate 4-Year Plan"**
+4. View your personalized plan with year-by-year breakdown, recommendations, and evaluation
+
+### Web UI Features
+
+- ✅ **User-Friendly Form**: All fields from `main.py` as interactive inputs
+- ✅ **Tag-Based Lists**: Easy add/remove for interests, courses, extracurriculars
+- ✅ **Real-Time Validation**: Required fields clearly marked
+- ✅ **Beautiful Results Display**: Organized year-by-year plan view
+- ✅ **Responsive Design**: Works on desktop and mobile
+- ✅ **Error Handling**: Clear error messages with troubleshooting hints
+
+### Troubleshooting
+
+**Backend Issues:**
+
+- **Port 8000 already in use**: Change port in `backend/api.py` or kill the process using it
+- **Import errors**: 
+  - Verify virtual environment is activated: `which python` should show `venv/bin/python`
+  - Install all dependencies: `pip install -r requirements.txt && pip install -r backend/requirements.txt`
+- **API key errors**: 
+  - Check `GOOGLE_API_KEY` is set: `echo $GOOGLE_API_KEY`
+  - Export in the same terminal: `export GOOGLE_API_KEY="your-key"`
+
+**Frontend Issues:**
+
+- **Node.js not found**: Install Node.js 18+: `brew install node` (macOS) or download from [nodejs.org](https://nodejs.org/)
+- **npm install fails**: 
+  - Clear cache: `npm cache clean --force`
+  - Delete and reinstall: `rm -rf node_modules package-lock.json && npm install`
+- **Port 3000 in use**: Vite will automatically use the next available port
+
+**Connection Issues:**
+
+- **CORS errors**: Verify backend is running on port 8000 and frontend connects to `http://localhost:8000`
+- **"Failed to fetch"**: 
+  - Check backend is running: `curl http://localhost:8000/`
+  - Check browser console for detailed errors
+- **API 500 errors**: Check backend terminal logs for detailed error messages
+
+**For more detailed troubleshooting, see [WEB_UI_SETUP.md](WEB_UI_SETUP.md)**
+
 ### Expected Output
 
 With all agents using ADK and database tools, you should see high-quality plans:
@@ -451,23 +578,37 @@ Results are saved to `output/college_plan.json`.
 
 ```
 college-planner/
-├── src/
+├── src/                        # Python source code
 │   ├── __init__.py
 │   ├── models.py              # Data models (StudentProfile, FourYearPlan, etc.)
 │   ├── orchestrator.py        # Main pipeline coordinator
-│   ├── agents/
+│   ├── agents/                # AI agents
 │   │   ├── __init__.py
 │   │   ├── profile_agent.py   # Normalizes student input
 │   │   ├── retrieval_agent.py # Finds similar profiles
 │   │   ├── planner_agent.py   # Creates 4-year plans
 │   │   ├── critic_agent.py    # Evaluates plans (loop agent)
 │   │   └── explainer_agent.py # Generates final output
-│   └── tools/
-│       ├── __init__.py
-│       ├── data_loader.py     # Loads profiles and opportunities
-│       ├── database.py         # Database interface
-│       ├── agent_tools.py      # Database tools for agents
-│       └── evaluation.py      # Plan evaluation metrics
+│   ├── tools/                 # Database and utility tools
+│   │   ├── __init__.py
+│   │   ├── data_loader.py     # Loads profiles and opportunities
+│   │   ├── database.py         # Database interface
+│   │   ├── agent_tools.py      # Database tools for agents
+│   │   └── evaluation.py      # Plan evaluation metrics
+│   └── utils/                  # Utility functions
+│       └── adk_helper.py      # ADK integration helpers
+├── backend/                    # FastAPI backend for web UI
+│   ├── api.py                  # REST API endpoints
+│   └── requirements.txt        # Backend dependencies
+├── frontend/                    # React frontend for web UI
+│   ├── src/
+│   │   ├── App.jsx            # Main React component
+│   │   ├── components/
+│   │   │   ├── StudentForm.jsx # Profile input form
+│   │   │   └── ResultsDisplay.jsx # Plan results display
+│   │   └── index.jsx          # React entry point
+│   ├── package.json           # Node.js dependencies
+│   └── vite.config.js         # Vite configuration
 ├── tests/                      # Automated test suite
 │   ├── test_profile_agent.py
 │   ├── test_database.py
@@ -481,10 +622,10 @@ college-planner/
 │   └── enrich_profiles.py
 ├── data/                       # Data files
 │   └── student_profiles.json
-├── main.py                     # Entry point with example
+├── main.py                     # CLI entry point with example
 ├── test_simple.py              # Quick comparison test
 ├── test_natural_language.py   # Natural language test
-├── requirements.txt            # Dependencies
+├── requirements.txt            # Python dependencies
 └── README.md                   # This file
 ```
 

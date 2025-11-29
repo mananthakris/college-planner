@@ -1,0 +1,9 @@
+# FastAPI backend dependencies
+fastapi
+uvicorn[standard]
+pydantic
+
+# Note: Also install main project dependencies from ../requirements.txt
+# The backend imports from src/, so it needs all main project dependencies too.
+# Run: pip install -r ../requirements.txt -r requirements.txt
+

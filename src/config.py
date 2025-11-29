@@ -36,3 +36,18 @@ def get_gemini_model() -> str:
 DATABASE_PATH = os.getenv("DATABASE_PATH", "data/student_profiles.db")
 PROFILES_JSON_PATH = os.getenv("PROFILES_JSON_PATH", "data/student_profiles.json")
 
+
+# Debug configuration
+def is_debug_mode() -> bool:
+    """
+    Check if debug mode is enabled.
+    
+    Set with: export DEBUG_MODE=1
+    Or in .env file: DEBUG_MODE=1
+    
+    Returns:
+        True if debug mode is enabled, False otherwise
+    """
+    debug = os.getenv("DEBUG_MODE", "0").lower()
+    return debug in ("1", "true", "yes", "on")
+

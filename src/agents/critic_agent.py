@@ -6,7 +6,7 @@ from typing import Dict, Any
 import json
 import warnings
 from ..models import StudentProfile, FourYearPlan, Critique
-from ..config import get_gemini_model
+from ..config import get_gemini_model, is_debug_mode
 from ..utils.adk_helper import run_agent_sync, extract_json_from_response
 
 
@@ -179,7 +179,18 @@ Evaluate the plan and return JSON with:
             
             response = run_agent_sync(agent, prompt)
         
+        if is_debug_mode():
+            print("\n" + "="*80)
+            print("DEBUG [critic_agent]: Critique Response")
+            print("="*80)
+            print(f"Response length: {len(str(response))} characters")
+            print("="*80 + "\n")
+        
         critique_data = extract_json_from_response(response)
+        
+        if is_debug_mode():
+            print("DEBUG [critic_agent]: Extracted critique keys:", 
+                  list(critique_data.keys()) if critique_data else "None")
         
         if critique_data:
             return Critique(

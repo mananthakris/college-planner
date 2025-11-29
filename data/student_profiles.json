@@ -1,0 +1,270 @@
+[
+  {
+    "name": "Student 7361",
+    "current_grade": 12,
+    "interests": [
+      "Computer Science",
+      "Mathematics",
+      "Robotics"
+    ],
+    "academic_strengths": [
+      "Math",
+      "Science"
+    ],
+    "courses_taken": [
+      "AP Calculus",
+      "AP Computer Science",
+      "AP Physics"
+    ],
+    "courses_planned": [],
+    "extracurriculars": [
+      "Robotics Club",
+      "Math Olympiad"
+    ],
+    "achievements": [],
+    "target_colleges": [
+      "MIT",
+      "Stanford",
+      "UC Berkeley"
+    ],
+    "target_majors": [
+      "Computer Science",
+      "Engineering"
+    ],
+    "gpa": null,
+    "test_scores": {},
+    "additional_info": {},
+    "colleges_admitted": []
+  },
+  {
+    "name": "Student 6729",
+    "current_grade": 12,
+    "interests": [
+      "Biology",
+      "Medicine",
+      "Research"
+    ],
+    "academic_strengths": [
+      "Biology",
+      "Chemistry"
+    ],
+    "courses_taken": [
+      "AP Biology",
+      "AP Chemistry",
+      "AP Statistics"
+    ],
+    "courses_planned": [],
+    "extracurriculars": [
+      "Science Research",
+      "Hospital Volunteer"
+    ],
+    "achievements": [],
+    "target_colleges": [
+      "Johns Hopkins",
+      "Harvard",
+      "Yale"
+    ],
+    "target_majors": [
+      "Biology",
+      "Pre-Med"
+    ],
+    "gpa": null,
+    "test_scores": {},
+    "additional_info": {},
+    "colleges_admitted": []
+  },
+  {
+    "name": "Student 590",
+    "current_grade": 12,
+    "interests": [
+      "Computer Science",
+      "Mathematics",
+      "Biology",
+      "Chemistry",
+      "Physics",
+      "Medicine"
+    ],
+    "academic_strengths": [
+      "Mathematics",
+      "Science",
+      "Computer Science"
+    ],
+    "courses_taken": [
+      "AP Physics C",
+      "AP Lit",
+      "AP Gov"
+    ],
+    "courses_planned": [],
+    "extracurriculars": [
+      "Debate",
+      "Mun",
+      "Volunteer",
+      "Research"
+    ],
+    "achievements": [],
+    "target_colleges": [
+      "Stanford",
+      "Harvard",
+      "Yale",
+      "University of Pennsylvania",
+      "Cornell",
+      "Duke"
+    ],
+    "target_majors": [
+      "Medical Anthropology"
+    ],
+    "gpa": null,
+    "test_scores": {
+      "SAT": 1570
+    },
+    "colleges_admitted": [
+      "Stanford",
+      "Harvard",
+      "Yale",
+      "University of Pennsylvania",
+      "Cornell",
+      "Duke"
+    ],
+    "final_major": "Medical Anthropology",
+    "additional_info": {}
+  },
+  {
+    "name": "Student 2157",
+    "current_grade": 12,
+    "interests": [
+      "Computer Science",
+      "Biology",
+      "Physics"
+    ],
+    "academic_strengths": [
+      "Science",
+      "Computer Science"
+    ],
+    "courses_taken": [
+      "AP Bio",
+      "AP Chem",
+      "AP Cs A",
+      "AP Physics C",
+      "AP Scholar\n\nEssays",
+      "AP Chem Teacher"
+    ],
+    "courses_planned": [],
+    "extracurriculars": [
+      "Science Olympiad",
+      "Internship",
+      "Research"
+    ],
+    "achievements": [],
+    "target_colleges": [
+      "MIT",
+      "Stanford",
+      "Princeton",
+      "UCLA",
+      "Johns Hopkins"
+    ],
+    "target_majors": [
+      "Neuroscience"
+    ],
+    "gpa": null,
+    "test_scores": {
+      "SAT": 1550
+    },
+    "colleges_admitted": [
+      "MIT",
+      "Stanford",
+      "Princeton",
+      "UCLA",
+      "Johns Hopkins"
+    ],
+    "final_major": "Neuroscience",
+    "additional_info": {}
+  },
+  {
+    "name": "Student 7387",
+    "current_grade": 12,
+    "interests": [
+      "Computer Science",
+      "Mathematics",
+      "Biology",
+      "Medicine"
+    ],
+    "academic_strengths": [
+      "Mathematics",
+      "Science",
+      "Computer Science"
+    ],
+    "courses_taken": [
+      "AP Scholar With Distinction",
+      "AP Bio Teacher"
+    ],
+    "courses_planned": [],
+    "extracurriculars": [
+      "Volunteer",
+      "Research",
+      "Club"
+    ],
+    "achievements": [],
+    "target_colleges": [
+      "University of Pennsylvania"
+    ],
+    "target_majors": [
+      "Biology"
+    ],
+    "gpa": null,
+    "test_scores": {
+      "SAT": 1560
+    },
+    "colleges_admitted": [
+      "University of Pennsylvania"
+    ],
+    "final_major": "Biology",
+    "additional_info": {}
+  },
+  {
+    "name": "Student 8624",
+    "current_grade": 12,
+    "interests": [
+      "Computer Science",
+      "Medicine"
+    ],
+    "academic_strengths": [
+      "Science",
+      "Computer Science"
+    ],
+    "courses_taken": [
+      "AP Chem",
+      "AP Bio",
+      "AP Spanish",
+      "AP Lang",
+      "AP Human Geography",
+      "AP Scholar With Distinction",
+      "AP Spanish Teacher"
+    ],
+    "courses_planned": [],
+    "extracurriculars": [
+      "Mun",
+      "Volunteer",
+      "Research"
+    ],
+    "achievements": [],
+    "target_colleges": [
+      "Harvard",
+      "Yale",
+      "University of Pennsylvania"
+    ],
+    "target_majors": [
+      "Global Health"
+    ],
+    "gpa": null,
+    "test_scores": {
+      "ACT": 34
+    },
+    "colleges_admitted": [
+      "Harvard",
+      "Yale",
+      "University of Pennsylvania"
+    ],
+    "final_major": "Global Health",
+    "additional_info": {}
+  }
+]

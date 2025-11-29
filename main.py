@@ -10,16 +10,16 @@ def main():
     # Example student profile input
     example_profile = {
         "name": "Alex Johnson",
-        "current_grade": 9,
-        "interests": ["Computer Science", "Mathematics", "Robotics"],
-        "academic_strengths": ["Math", "Science", "Problem Solving"],
-        "courses_taken": [],
+        "current_grade": 10,
+        "interests": ["Pre-Med", "Biology", "Neuroscience"],
+        "academic_strengths": ["Science", "History", "Problem Solving", "French"],
+        "courses_taken": ["AP CSP", "AP French", "AP US History", "AP Human Geography", "AP Pre-Calculus", "AP Physics 1"],
         "courses_planned": [],
-        "extracurriculars": ["Robotics Club"],
-        "achievements": [],
-        "target_colleges": ["MIT", "Stanford", "UC Berkeley"],
-        "target_majors": ["Computer Science", "Engineering"],
-        "gpa": None,
+        "extracurriculars": ["Research", "Nursing Home Volunteering", "Orchestra", "Science Fair", "Biology Olympiad"],
+        "achievements": ["Science Fair Regional Winner", "Science Fair State Finalist", "Viola Regional Winner", "Viola All-State","MIT Poster Project","Columbia Poster Project","UT HSRA"],
+        "target_colleges": ["UT Austin", "Stanford", "Northwestern", "Washington University in St. Louis","Emory University", "Baylor University BS/MD","Boston University", "University of Houston BS/MD"],
+        "target_majors": ["Neuroscience", "BioChemistry","Pre-Med"],
+        "gpa": 4.0,
         "test_scores": {}
     }
     

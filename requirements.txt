@@ -10,6 +10,9 @@ google-adk>=0.1.0
 # Google Generative AI (Gemini) for natural language processing
 google-generativeai>=0.3.0
 
+# Async support for FastAPI compatibility (allows nested event loops)
+nest-asyncio>=1.5.0
+
 # Database support (for future vector search)
 # numpy>=1.24.0
 # scikit-learn>=1.3.0

@@ -6,7 +6,7 @@ from typing import Dict, Any
 import json
 import warnings
 from ..models import StudentProfile, FourYearPlan, Critique, Explanation, Grade
-from ..config import get_gemini_model
+from ..config import get_gemini_model, is_debug_mode
 from ..utils.adk_helper import run_agent_sync, extract_json_from_response
 
 
@@ -197,7 +197,18 @@ Return ONLY valid JSON."""
             
             response = run_agent_sync(agent, prompt)
         
+        if is_debug_mode():
+            print("\n" + "="*80)
+            print("DEBUG [explainer_agent]: Explanation Response")
+            print("="*80)
+            print(f"Response length: {len(str(response))} characters")
+            print("="*80 + "\n")
+        
         explanation_data = extract_json_from_response(response)
+        
+        if is_debug_mode():
+            print("DEBUG [explainer_agent]: Extracted explanation keys:", 
+                  list(explanation_data.keys()) if explanation_data else "None")
         
         if explanation_data:
             return Explanation(
